@@ -835,6 +835,14 @@ class MicropyGPS(object):
                'GN', # Multiple GNSS
                )
 
+    # Map from NMEA signal IDs to preferred talker IDs
+    nmea_signal_ids = {1: 'GP',
+                       3: 'GA',
+                       4: 'GB',
+                       5: 'GQ',
+                       2: 'GL',
+                       }
+
 
 if __name__ == "__main__":
     pass
