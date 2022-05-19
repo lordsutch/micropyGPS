@@ -789,12 +789,12 @@ class MicropyGPS(object):
     def date_string(self, formatting='s_mdy'):
         """
         Creates a readable string of the current date.
-        Can select between long format: Januray 1st, 2014
-        or two short formats:
+        Can select between long format: January 1st, 2014
+        or three short formats:
         11/01/2014 (MM/DD/YYYY)
         01/11/2014 (DD/MM/YYYY)
-        :param formatting: string 's_mdy', 's_dmy', or 'long'
-        :param century: int delineating the century the GPS data is from (19 for 19XX, 20 for 20XX)
+        2014-01-11 (YYYY-MM-DD) (aka ISO format)
+        :param formatting: string 's_mdy', 's_dmy', 'iso', or 'long'
         :return: date_string  string with long or short format date
         """
 
@@ -815,10 +815,12 @@ class MicropyGPS(object):
                 suffix = 'th'
 
             date_string = f'{month_name} {day}{suffix}, {year}'
+        elif formatting == 'iso':
+            date_string = f'{year:04d}-{month:02d}-{day:02d}'
         elif formatting == 's_dmy':
-            date_string = f'{day:02d}/{month:02d}/{year:02d}'
+            date_string = f'{day:02d}/{month:02d}/{year:04d}'
         else:  # Default date format
-            date_string = f'{month:02d}/{day:02d}/{year:02d}'
+            date_string = f'{month:02d}/{day:02d}/{year:04d}'
 
         return date_string
 
