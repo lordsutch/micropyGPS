@@ -38,7 +38,7 @@ class MicropyGPS(object):
                 'June', 'July', 'August', 'September', 'October',
                 'November', 'December')
 
-    def __init__(self, local_offset=0, location_formatting='ddm'):
+    def __init__(self, local_offset=0, location_formatting='ddm', century=20):
         """
         Setup GPS Object Status Flags, Internal Data Registers, etc
             local_offset (int): Timzone Difference to UTC
@@ -46,6 +46,7 @@ class MicropyGPS(object):
                                        Decimal Degree Minute (ddm) - 40° 26.767′ N
                                        Degrees Minutes Seconds (dms) - 40° 26′ 46″ N
                                        Decimal Degrees (dd) - 40.446° N
+            century (int): Default century for messages with two-digit years
         """
 
         #####################
@@ -75,6 +76,7 @@ class MicropyGPS(object):
         self.timestamp = [0, 0, 0.0]
         self.date = [0, 0, 0]
         self.local_offset = local_offset
+        self.century = century
 
         # Position/Motion
         self._latitude = [0, 0.0, 'N']
@@ -196,12 +198,11 @@ class MicropyGPS(object):
         try:
             date_string = self.gps_segments[9]
 
-            # Date string printer function assumes to be year >=2000,
-            # date_string() must be supplied with the correct century argument to display correctly
+            # If GPS isn't sending ZDA messages, century is set in constructor
             if date_string:  # Possible date stamp found
                 day = int(date_string[0:2])
                 month = int(date_string[2:4])
-                year = int(date_string[4:6])
+                year = int(date_string[4:6]) + 100*self.century
                 self.date = (day, month, year)
             else:  # No Date stamp yet
                 self.date = (0, 0, 0)
@@ -561,6 +562,7 @@ class MicropyGPS(object):
             day = int(self.gps_segments[2])
             month = int(self.gps_segments[3])
             year = int(self.gps_segments[4])
+            self.century = year // 100
             self.date = (day, month, year)
         except ValueError:  # Bad Date stamp value present
             return False
@@ -784,7 +786,7 @@ class MicropyGPS(object):
 
         return speed_string
 
-    def date_string(self, formatting='s_mdy', century='20'):
+    def date_string(self, formatting='s_mdy'):
         """
         Creates a readable string of the current date.
         Can select between long format: Januray 1st, 2014
@@ -813,7 +815,7 @@ class MicropyGPS(object):
 
             day = str(self.date[0]) + suffix  # Create Day String
 
-            year = century + str(self.date[2])  # Create Year String
+            year = str(self.date[2])  # Create Year String
 
             date_string = month + ' ' + day + ', ' + year  # Put it all together
 
