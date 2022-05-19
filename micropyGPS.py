@@ -798,52 +798,27 @@ class MicropyGPS(object):
         :return: date_string  string with long or short format date
         """
 
+        day, month, year = self.date
         # Long Format Januray 1st, 2014
         if formatting == 'long':
             # Retrieve Month string from private set
-            month = self.__MONTHS[self.date[1] - 1]
+            month_name = self.__MONTHS[month - 1]
 
             # Determine Date Suffix
-            if self.date[0] in (1, 21, 31):
+            if day in (1, 21, 31):
                 suffix = 'st'
-            elif self.date[0] in (2, 22):
+            elif day in (2, 22):
                 suffix = 'nd'
-            elif self.date[0] == (3, 23):
+            elif day in (3, 23):
                 suffix = 'rd'
             else:
                 suffix = 'th'
 
-            day = str(self.date[0]) + suffix  # Create Day String
-
-            year = str(self.date[2])  # Create Year String
-
-            date_string = month + ' ' + day + ', ' + year  # Put it all together
-
-        else:
-            # Add leading zeros to day string if necessary
-            if self.date[0] < 10:
-                day = '0' + str(self.date[0])
-            else:
-                day = str(self.date[0])
-
-            # Add leading zeros to month string if necessary
-            if self.date[1] < 10:
-                month = '0' + str(self.date[1])
-            else:
-                month = str(self.date[1])
-
-            # Add leading zeros to year string if necessary
-            if self.date[2] < 10:
-                year = '0' + str(self.date[2])
-            else:
-                year = str(self.date[2])
-
-            # Build final string based on desired formatting
-            if formatting == 's_dmy':
-                date_string = day + '/' + month + '/' + year
-
-            else:  # Default date format
-                date_string = month + '/' + day + '/' + year
+            date_string = f'{month_name} {day}{suffix}, {year}'
+        elif formatting == 's_dmy':
+            date_string = f'{day:02d}/{month:02d}/{year:02d}'
+        else:  # Default date format
+            date_string = f'{month:02d}/{day:02d}/{year:02d}'
 
         return date_string
 
