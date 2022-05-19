@@ -723,10 +723,7 @@ class MicropyGPS(object):
         :return: string
         """
         # Calculate the offset for a rotated compass
-        if self.course >= 348.75:
-            offset_course = 360 - self.course
-        else:
-            offset_course = self.course + 11.25
+        offset_course = (self.course + 11.25) % 360.0
 
         # Each compass point is separated by 22.5 degrees, divide to find lookup value
         dir_index = floor(offset_course / 22.5)
