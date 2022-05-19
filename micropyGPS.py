@@ -539,6 +539,35 @@ class MicropyGPS(object):
 
         return True
 
+    def gpzda(self):
+        """Parse GNSS Time and Date (ZDA) sentence. Updates time and date."""
+        # UTC Timestamp
+        try:
+            utc_string = self.gps_segments[1]
+
+            if utc_string:  # Possible timestamp found
+                hours = (int(utc_string[0:2]) + self.local_offset) % 24
+                minutes = int(utc_string[2:4])
+                seconds = float(utc_string[4:])
+                self.timestamp = [hours, minutes, seconds]
+            else:  # No Time stamp yet
+                self.timestamp = [0, 0, 0.0]
+
+        except ValueError:  # Bad Timestamp value present
+            return False
+
+        # Date stamp
+        try:
+            day = int(self.gps_segments[2])
+            month = int(self.gps_segments[3])
+            year = int(self.gps_segments[4])
+            self.date = (day, month, year)
+        except ValueError:  # Bad Date stamp value present
+            return False
+
+        # Could parse timezone data in positions 5 to 6 if any GPS supports it
+        return True
+
     ##########################################
     # Data Stream Handler Functions
     ##########################################
@@ -823,6 +852,7 @@ class MicropyGPS(object):
                            'GSA': gpgsa,
                            'GSV': gpgsv,
                            'GLL': gpgll,
+                           'ZDA': gpzda,
                            }
 
     talkers = ('GP', # Navstar GPS
