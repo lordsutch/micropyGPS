@@ -615,9 +615,9 @@ class MicropyGPS(object):
                     self.clean_sentences += 1  # Increment clean sentences received
                     self.sentence_active = False  # Clear Active Processing Flag
 
-                    talker, message = self.gps_segments[0][:2], self.gps_segments[0][2:]
+                    self.talker, message = self.gps_segments[0][:2], self.gps_segments[0][2:]
                     if message in self.supported_sentences \
-                       and talker in self.talkers:
+                       and self.talker in self.talkers:
 
                         # parse the Sentence Based on the message type, return True if parse is clean
                         if self.supported_sentences[message](self):
