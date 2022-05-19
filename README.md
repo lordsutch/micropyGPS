@@ -2,8 +2,9 @@
 
 ## Overview
 
-micropyGPS is a full featured GPS NMEA sentence parser for use with [MicroPython] and the PyBoard embedded
-platform. It's also fully compatible with Python 3.x
+micropyGPS is a full featured GPS NMEA sentence parser for use with
+[MicroPython] (1.17 or later) and the PyBoard embedded
+platform. It's also fully compatible with Python 3.6 or later.
 
 Features:
 
