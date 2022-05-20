@@ -762,6 +762,20 @@ class MicropyGPS(object):
 
         return speed_string
 
+    def ordinal_number(self, value):
+        # Determine Date Suffix
+        last_digit = value % 10
+        if (4 <= value <= 20) or last_digit >= 4:
+            return f'{value}th'
+        elif last_digit == 1:
+            return f'{value}st'
+        elif last_digit == 2:
+            return f'{value}nd'
+        elif last_digit == 3:
+            return f'{value}rd'
+        # Shouldn't get here
+        raise ValueError('Invalid value supplied', value)
+
     def date_string(self, formatting='s_mdy'):
         """
         Creates a readable string of the current date.
@@ -775,22 +789,13 @@ class MicropyGPS(object):
         """
 
         day, month, year = self.date
-        # Long Format Januray 1st, 2014
+        # Long Format January 1st, 2014
         if formatting == 'long':
             # Retrieve Month string from private set
             month_name = self.__MONTHS[month - 1]
+            ordday = self.ordinal_number(day)
 
-            # Determine Date Suffix
-            if day in (1, 21, 31):
-                suffix = 'st'
-            elif day in (2, 22):
-                suffix = 'nd'
-            elif day in (3, 23):
-                suffix = 'rd'
-            else:
-                suffix = 'th'
-
-            date_string = f'{month_name} {day}{suffix}, {year}'
+            date_string = f'{month_name} {ordday}, {year}'
         elif formatting == 'iso':
             date_string = f'{year:04d}-{month:02d}-{day:02d}'
         elif formatting == 's_dmy':
