@@ -430,13 +430,13 @@ class MicropyGPS(object):
             return False
 
         # Read All (up to 12) Available PRN Satellite Numbers
-        sats_used = []
+        sats_used = set()
         for sats in range(12):
             sat_number_str = self.gps_segments[3 + sats]
             if sat_number_str:
                 try:
                     sat_number = int(sat_number_str)
-                    sats_used.append(sat_number)
+                    sats_used.add(sat_number)
                 except ValueError:
                     return False
             else:
@@ -458,14 +458,24 @@ class MicropyGPS(object):
             self.new_fix_time()
 
         talker = self.talker
-        if len(self.gps_segments) >= 19:
+        if len(self.gps_segments) >= 20:
             try:
-                systemID = int(self.gps_segments[18])
+                systemID = int(self.gps_segments[18], 16)
             except ValueError:
                 systemID = 1
             talker = self.nmea_system_ids[systemID]
+            self.satellites_used[talker] = sats_used
+        else:
+            if not talker in self.satellites_used:
+                self.satellites_used[talker] = set()
+            for t, satinfo in self.satellite_data.items():
+                for signum, sats_in_view in satinfo.items():
+                    sats_in_view = set(sats_in_view.keys())
+                    # Find satellite list including sats in this sentence
+                    if sats_in_view & sats_used:
+                        self.satellites_used[talker] -= sats_in_view
+            self.satellites_used[talker] |= sats_used
 
-        self.satellites_used[talker] = sats_used
         self.hdop = hdop
         self.vdop = vdop
         self.pdop = pdop
@@ -485,14 +495,7 @@ class MicropyGPS(object):
         # Create a blank dict to store all the satellite data from this sentence in:
         # satellite PRN is key, tuple containing telemetry is value
         satellite_dict = dict()
-
-        # Calculate  Number of Satelites to pull data for and thus how many segment positions to read
-        if num_sv_sentences == current_sv_sentence:
-            # Last sentence may have 1-4 satellites; 5 - 20 positions
-            sat_segment_limit = (sats_in_view - ((num_sv_sentences - 1) * 4)) * 5
-        else:
-            sat_segment_limit = 20  # Non-last sentences have 4 satellites and thus read up to position 20
-
+        sat_segment_limit = 4*(len(self.gps_segments) // 4)
         # Try to recover data for up to 4 satellites in sentence
         for sats in range(4, sat_segment_limit, 4):
 
@@ -527,23 +530,31 @@ class MicropyGPS(object):
         # Update Object Data
         self.total_sv_sentences = num_sv_sentences
         self.last_sv_sentence = current_sv_sentence
-        self.satellites_in_view = sats_in_view
 
         signum = 1
-        if (len(self.gps_segments) % 4) >= 1:
+        if (len(self.gps_segments) % 4) != 1:
             try:
-                pos = (self.gps_segments // 4)*4
-                signum = int(self.gps_segments[pos])
+                pos = (len(self.gps_segments) // 4)*4
+                signum = int(self.gps_segments[pos], 16)
             except ValueError:
                 pass
 
         # For a new set of sentences, we either clear out the existing sat data or
         # update it as additional SV sentences are parsed
-        if current_sv_sentence == 1:
-            self.satellite_data[(self.talker, signum)] = satellite_dict
-        else:
-            self.satellite_data[(self.talker, signum)].update(satellite_dict)
+        if self.talker not in self.satellite_data:
+            self.satellite_data[self.talker] = dict()
 
+        if current_sv_sentence == 1:
+            self.satellite_data[self.talker] = {signum: satellite_dict}
+        elif signum in self.satellite_data[self.talker]:
+            self.satellite_data[self.talker][signum].update(satellite_dict)
+        else:
+            self.satellite_data[self.talker][signum] = satellite_dict
+
+        if current_sv_sentence == num_sv_sentences:
+            self.satellites_in_view = 0
+            for sigdict in self.satellite_data.values():
+                self.satellites_in_view += sum(len(x) for x in sigdict.values())
         return True
 
     def gpzda(self):
@@ -693,10 +704,10 @@ class MicropyGPS(object):
 
     def satellites_visible(self):
         """
-        Returns a list of of the satellite PRNs currently visible to the receiver
-        :return: list
+        Returns a dict of of the satellite PRNs currently visible to the receiver indexed by system and signal
+        :return: dict
         """
-        return list(self.satellite_data.items())
+        return {talker: tuple(sats) for talker, sats in self.satellite_data.items()}
 
     def time_since_fix(self):
         """Returns number of millisecond since the last sentence with a valid fix was parsed. Returns 0 if
@@ -866,12 +877,12 @@ class MicropyGPS(object):
                )
 
     # Map from NMEA system IDs to preferred talker IDs
-    nmea_system_ids = {1: 'GP',
-                       3: 'GA',
-                       4: 'GB',
-                       5: 'GQ',
-                       2: 'GL',
-                       6: 'GI',
+    nmea_system_ids = {0x1: 'GP',
+                       0x2: 'GL',
+                       0x3: 'GA',
+                       0x4: 'GB',
+                       0x5: 'GQ',
+                       0x6: 'GI',
                        }
 
 
