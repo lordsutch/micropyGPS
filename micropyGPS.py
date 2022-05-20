@@ -776,6 +776,19 @@ class MicropyGPS(object):
         # Shouldn't get here
         raise ValueError('Invalid value supplied', value)
 
+    def time_string(self, format_24hrs=True):
+        """Return time as a string.
+
+        :param format_24hrs boolean - Whether to use 24 hour clock or am/pm"""
+        h, m, s = self.timestamp
+        s = int(s)
+        if format_24hrs:
+            return f'{h:02d}:{m:02d}:{s:02d}'
+        else:
+            ampm = 'pm' if h >= 12 else 'am'
+            h_12 = 12 if h in (0, 12) else h % 12
+            return f'{h_12:02d}:{m:02d}:{s:02d} {ampm}'
+
     def date_string(self, formatting='s_mdy'):
         """
         Creates a readable string of the current date.
