@@ -90,7 +90,7 @@ class MicropyGPS(object):
         # GPS Info
         self.satellites_in_view = 0
         self.satellites_in_use = 0
-        self.satellites_used = []
+        self.satellites_used = dict()
         self.last_sv_sentence = 0
         self.total_sv_sentences = 0
         self.satellite_data = dict()
@@ -457,7 +457,15 @@ class MicropyGPS(object):
         if fix_type > self.__NO_FIX:
             self.new_fix_time()
 
-        self.satellites_used = sats_used
+        talker = self.talker
+        if len(self.gps_segments) >= 19:
+            try:
+                systemID = int(self.gps_segments[18])
+            except ValueError:
+                systemID = 1
+            talker = self.nmea_signal_ids[systemID]
+
+        self.satellites_used[talker] = sats_used
         self.hdop = hdop
         self.vdop = vdop
         self.pdop = pdop
@@ -524,9 +532,9 @@ class MicropyGPS(object):
         # For a new set of sentences, we either clear out the existing sat data or
         # update it as additional SV sentences are parsed
         if current_sv_sentence == 1:
-            self.satellite_data = satellite_dict
+            self.satellite_data[self.talker] = satellite_dict
         else:
-            self.satellite_data.update(satellite_dict)
+            self.satellite_data[self.talker].update(satellite_dict)
 
         return True
 
