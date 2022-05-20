@@ -529,12 +529,20 @@ class MicropyGPS(object):
         self.last_sv_sentence = current_sv_sentence
         self.satellites_in_view = sats_in_view
 
+        signum = 1
+        if (len(self.gps_segments) % 4) >= 1:
+            try:
+                pos = (self.gps_segments // 4)*4
+                signum = int(self.gps_segments[pos])
+            except ValueError:
+                pass
+
         # For a new set of sentences, we either clear out the existing sat data or
         # update it as additional SV sentences are parsed
         if current_sv_sentence == 1:
-            self.satellite_data[self.talker] = satellite_dict
+            self.satellite_data[(self.talker, signum)] = satellite_dict
         else:
-            self.satellite_data[self.talker].update(satellite_dict)
+            self.satellite_data[(self.talker, signum)].update(satellite_dict)
 
         return True
 
@@ -688,7 +696,7 @@ class MicropyGPS(object):
         Returns a list of of the satellite PRNs currently visible to the receiver
         :return: list
         """
-        return list(self.satellite_data.keys())
+        return list(self.satellite_data.items())
 
     def time_since_fix(self):
         """Returns number of millisecond since the last sentence with a valid fix was parsed. Returns 0 if
