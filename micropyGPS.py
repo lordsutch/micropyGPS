@@ -463,7 +463,7 @@ class MicropyGPS(object):
                 systemID = int(self.gps_segments[18])
             except ValueError:
                 systemID = 1
-            talker = self.nmea_signal_ids[systemID]
+            talker = self.nmea_system_ids[systemID]
 
         self.satellites_used[talker] = sats_used
         self.hdop = hdop
@@ -634,6 +634,9 @@ class MicropyGPS(object):
                     self.sentence_active = False  # Clear Active Processing Flag
 
                     self.talker, message = self.gps_segments[0][:2], self.gps_segments[0][2:]
+                    self.talker = self.talker_aliases.get(self.talker,
+                                                          self.talker)
+
                     if message in self.supported_sentences \
                        and self.talker in self.talkers:
 
@@ -840,22 +843,27 @@ class MicropyGPS(object):
                            'ZDA': gpzda,
                            }
 
+    talker_aliases = {'BD': 'GB',
+                      'PQ': 'GQ',
+                      'QZ': 'GQ',
+                      }
+
     talkers = ('GP', # Navstar GPS
                'GL', # GLONASS
                'GA', # Galileo
                'GB', # BeiDou
-               'BD', # Also used for BeiDou
+               'GI', # NavIC/IRNSS
                'GQ', # QZSS
-               'QZ', # Also used for QZSS
                'GN', # Multiple GNSS
                )
 
-    # Map from NMEA signal IDs to preferred talker IDs
-    nmea_signal_ids = {1: 'GP',
+    # Map from NMEA system IDs to preferred talker IDs
+    nmea_system_ids = {1: 'GP',
                        3: 'GA',
                        4: 'GB',
                        5: 'GQ',
                        2: 'GL',
+                       6: 'GI',
                        }
 
 
