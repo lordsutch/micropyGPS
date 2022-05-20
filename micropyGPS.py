@@ -780,11 +780,12 @@ class MicropyGPS(object):
         """
         Creates a readable string of the current date.
         Can select between long format: January 1st, 2014
+        long DMY format (i.e. UK, military): 1 January 2014
         or three short formats:
         11/01/2014 (MM/DD/YYYY)
         01/11/2014 (DD/MM/YYYY)
         2014-01-11 (YYYY-MM-DD) (aka ISO format)
-        :param formatting: string 's_mdy', 's_dmy', 'iso', or 'long'
+        :param formatting: string 's_mdy', 's_dmy', 'iso', 'l_dmy', or 'long'
         :return: date_string  string with long or short format date
         """
 
@@ -796,6 +797,9 @@ class MicropyGPS(object):
             ordday = self.ordinal_number(day)
 
             date_string = f'{month_name} {ordday}, {year}'
+        elif formatting == 'l_dmy':
+            month_name = self.__MONTHS[month - 1]
+            date_string = f'{day} {month_name} {year}'
         elif formatting == 'iso':
             date_string = f'{year:04d}-{month:02d}-{day:02d}'
         elif formatting == 's_dmy':
