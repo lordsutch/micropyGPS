@@ -100,6 +100,8 @@ class MicropyGPS(object):
         self.valid = False
         self.fix_stat = 0
         self.fix_type = 1
+        self.dgps_age = None
+        self.dgps_station = None
 
     ########################################
     # Coordinates Translation Functions
@@ -408,7 +410,11 @@ class MicropyGPS(object):
             self.geoid_height = geoid_height
 
         # Update Object Data
-        self.satellites_in_use = satellites_in_use
+        if self.satellites_in_use <= 12 or satellites_in_use > 12:
+            # If true value > 12, don't override whatever xxGNS is providing
+            # since some units obey NMEA limit of 12 in xxRMC sentence
+            self.satellites_in_use = satellites_in_use
+
         self.hdop = hdop
         self.fix_stat = fix_stat
 
@@ -574,6 +580,75 @@ class MicropyGPS(object):
             return False
 
         # Could parse timezone data in positions 5 to 6 if any GPS supports it
+        return True
+
+    def gpgns(self):
+        """Parse GNSS fix data (GNS) sentence. Updates time, lon/lat,
+        satellites used, hdop, altitude, per-GNSS positioning mode,
+        geoid separation, and DGPS info."""
+        # UTC Timestamp
+        if not self.parse_time(self.gps_segments[1]):
+            return False
+
+        posMode = self.gps_segments[6]
+        if any((x in posMode for x in ('E', 'F', 'R', 'A', 'D'))):
+            # Longitude / Latitude
+            try:
+                # Latitude
+                l_string = self.gps_segments[2]
+                lat_degs = int(l_string[0:2])
+                lat_mins = float(l_string[2:])
+                lat_hemi = self.gps_segments[3]
+
+                # Longitude
+                l_string = self.gps_segments[4]
+                lon_degs = int(l_string[0:3])
+                lon_mins = float(l_string[3:])
+                lon_hemi = self.gps_segments[5]
+            except ValueError:
+                return False
+
+            if lat_hemi not in self.__HEMISPHERES:
+                return False
+
+            if lon_hemi not in self.__HEMISPHERES:
+                return False
+
+            try:
+                altitude = float(self.gps_segments[9])
+                geoid_height = float(self.gps_segments[10])
+            except ValueError:
+                altitude = 0
+                geoid_height = 0
+
+            # Update Object Data
+            self._latitude = [lat_degs, lat_mins, lat_hemi]
+            self._longitude = [lon_degs, lon_mins, lon_hemi]
+            self.altitude = altitude
+            self.geoid_height = geoid_height
+
+            self.new_fix_time()
+
+        try:
+            self.satellites_in_use = int(self.gps_segments[7])
+        except ValueError:
+            pass
+
+        try:
+            self.hdop = float(self.gps_segments[8])
+        except ValueError:
+            self.hdop = 0
+
+        try:
+            self.dgps_age = float(self.gps_segments[11])
+        except ValueError:
+            self.dgps_age = None
+
+        try:
+            self.dgps_station = float(self.gps_segments[12])
+        except ValueError:
+            self.dgps_station = None
+
         return True
 
     ##########################################
@@ -860,6 +935,7 @@ class MicropyGPS(object):
                            'GSV': gpgsv,
                            'GLL': gpgll,
                            'ZDA': gpzda,
+                           'GNS': gpgns,
                            }
 
     talker_aliases = {'BD': 'GB',
