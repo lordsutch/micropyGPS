@@ -466,7 +466,7 @@ class MicropyGPS(object):
             talker = self.nmea_system_ids[systemID]
             self.satellites_used[talker] = sats_used
         else:
-            if not talker in self.satellites_used:
+            if talker not in self.satellites_used:
                 self.satellites_used[talker] = set()
             for t, satinfo in self.satellite_data.items():
                 for signum, sats_in_view in satinfo.items():
