@@ -41,7 +41,7 @@ class MicropyGPS(object):
     def __init__(self, local_offset=0, location_formatting='ddm', century=20):
         """
         Setup GPS Object Status Flags, Internal Data Registers, etc
-            local_offset (int): Timzone Difference to UTC
+            local_offset (int): Timezone Difference to UTC in hours
             location_formatting (str): Style For Presenting Longitude/Latitude:
                                        Decimal Degree Minute (ddm) - 40° 26.767′ N
                                        Degrees Minutes Seconds (dms) - 40° 26′ 46″ N
@@ -73,9 +73,9 @@ class MicropyGPS(object):
         #####################
         # Data From Sentences
         # Time
-        self.timestamp = [0, 0, 0.0]
-        self.date = [0, 0, 0]
-        self.local_offset = local_offset
+        self.timestamp = (0, 0, 0.0)
+        self.date = (0, 0, 0)
+        self.local_offset = local_offset * 3600
         self.century = century
 
         # Position/Motion
@@ -171,6 +171,30 @@ class MicropyGPS(object):
             return False
         return True
 
+    def parse_time(self, utc_string):
+        '''Convert time in NMEA sentences to h:m:s, accounting for offset.
+
+        :param utc_string string containing time in NMEA format
+        :return: boolean reflecting success/failure'''
+        if utc_string:  # Possible timestamp found
+            try:
+                hours = int(utc_string[0:2])
+                minutes = int(utc_string[2:4])
+                seconds = float(utc_string[4:])
+            except ValueError:
+                return False
+
+            if self.local_offset:
+                total_secs = (hours*3600 + minutes * 60 + seconds +
+                              self.local_offset) % 86400
+                hours = (total_secs // 3600)
+                minutes = (total_secs % 3600) // 60
+                seconds = total_secs % 60
+            self.timestamp = (hours, minutes, seconds)
+        else:  # No Time stamp yet
+            self.timestamp = (0, 0, 0.0)
+        return True
+
     ########################################
     # Sentence Parsers
     ########################################
@@ -178,20 +202,7 @@ class MicropyGPS(object):
         """Parse Recommended Minimum Specific GPS/Transit data (RMC)Sentence.
         Updates UTC timestamp, latitude, longitude, Course, Speed, Date, and fix status
         """
-
-        # UTC Timestamp
-        try:
-            utc_string = self.gps_segments[1]
-
-            if utc_string:  # Possible timestamp found
-                hours = (int(utc_string[0:2]) + self.local_offset) % 24
-                minutes = int(utc_string[2:4])
-                seconds = float(utc_string[4:])
-                self.timestamp = [hours, minutes, seconds]
-            else:  # No Time stamp yet
-                self.timestamp = [0, 0, 0.0]
-
-        except ValueError:  # Bad Timestamp value present
+        if not self.parse_time(self.gps_segments[1]):
             return False
 
         # Date stamp
@@ -277,18 +288,7 @@ class MicropyGPS(object):
         longitude, and fix status"""
 
         # UTC Timestamp
-        try:
-            utc_string = self.gps_segments[5]
-
-            if utc_string:  # Possible timestamp found
-                hours = (int(utc_string[0:2]) + self.local_offset) % 24
-                minutes = int(utc_string[2:4])
-                seconds = float(utc_string[4:])
-                self.timestamp = [hours, minutes, seconds]
-            else:  # No Time stamp yet
-                self.timestamp = [0, 0, 0.0]
-
-        except ValueError:  # Bad Timestamp value present
+        if not self.parse_time(self.gps_segments[5]):
             return False
 
         # Check Receiver Data Valid Flag
@@ -348,20 +348,11 @@ class MicropyGPS(object):
         """Parse Global Positioning System Fix Data (GGA) Sentence. Updates UTC timestamp, latitude, longitude,
         fix status, satellites in use, Horizontal Dilution of Precision (HDOP), altitude, geoid height and fix status"""
 
+        # UTC Timestamp
+        if not self.parse_time(self.gps_segments[1]):
+            return False
+
         try:
-            # UTC Timestamp
-            utc_string = self.gps_segments[1]
-
-            # Skip timestamp if receiver doesn't have on yet
-            if utc_string:
-                hours = (int(utc_string[0:2]) + self.local_offset) % 24
-                minutes = int(utc_string[2:4])
-                seconds = float(utc_string[4:])
-            else:
-                hours = 0
-                minutes = 0
-                seconds = 0.0
-
             # Number of Satellites in Use
             satellites_in_use = int(self.gps_segments[7])
 
@@ -543,18 +534,7 @@ class MicropyGPS(object):
     def gpzda(self):
         """Parse GNSS Time and Date (ZDA) sentence. Updates time and date."""
         # UTC Timestamp
-        try:
-            utc_string = self.gps_segments[1]
-
-            if utc_string:  # Possible timestamp found
-                hours = (int(utc_string[0:2]) + self.local_offset) % 24
-                minutes = int(utc_string[2:4])
-                seconds = float(utc_string[4:])
-                self.timestamp = [hours, minutes, seconds]
-            else:  # No Time stamp yet
-                self.timestamp = [0, 0, 0.0]
-
-        except ValueError:  # Bad Timestamp value present
+        if not self.parse_time(self.gps_segments[1]):
             return False
 
         # Date stamp
