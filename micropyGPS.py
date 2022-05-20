@@ -408,7 +408,6 @@ class MicropyGPS(object):
             self.geoid_height = geoid_height
 
         # Update Object Data
-        self.timestamp = [hours, minutes, seconds]
         self.satellites_in_use = satellites_in_use
         self.hdop = hdop
         self.fix_stat = fix_stat
