@@ -106,6 +106,10 @@ class MicropyGPS(object):
         self.fix_type = 1
         self.dgps_age = None
         self.dgps_station = None
+        self.rangeRms = self.stdMajor = self.stdMinor = inf
+        self.orient = None
+        self.stdLat = self.stdLong = self.stdAlt = inf
+
 
     ########################################
     # Coordinates Translation Functions
@@ -655,6 +659,42 @@ class MicropyGPS(object):
 
         return True
 
+    def gpgst(self):
+        """Parse GNSS pseudorange error statistics (GST)."""
+        # UTC Timestamp
+        if not self.parse_time(self.gps_segments[1]):
+            return False
+
+        try:
+            self.rangeRms = float(self.gps_segments[2])
+        except ValueError:
+            self.rangeRms = inf
+
+        try:
+            self.stdMajor = float(self.gps_segments[3])
+            self.stdMinor = float(self.gps_segments[4])
+            self.orient = float(self.gps_segments[5])
+        except ValueError:
+            self.stdMajor = self.stdMinor = inf
+            self.orient = None
+
+        try:
+            self.stdLat = float(self.gps_segments[6])
+        except:
+            self.stdLat = inf
+
+        try:
+            self.stdLong = float(self.gps_segments[7])
+        except:
+            self.stdLong = inf
+
+        try:
+            self.stdAlt = float(self.gps_segments[8])
+        except:
+            self.stdAlt = inf
+
+        return True
+
     ##########################################
     # Data Stream Handler Functions
     ##########################################
@@ -940,6 +980,7 @@ class MicropyGPS(object):
                            'GLL': gpgll,
                            'ZDA': gpzda,
                            'GNS': gpgns,
+                           'GST': gpgst,
                            }
 
     talker_aliases = {'BD': 'GB',
