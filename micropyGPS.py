@@ -83,10 +83,10 @@ class MicropyGPS(object):
         self.century = century
 
         # Position/Motion
-        self._latitude = [0, 0.0, 'N']
-        self._longitude = [0, 0.0, 'W']
+        self._latitude = (0, 0.0, 'N')
+        self._longitude = (0, 0.0, 'W')
         self.coord_format = location_formatting
-        self.speed = [0.0, 0.0, 0.0]
+        self.speed = (0.0, 0.0, 0.0)
         self.course = 0.0
         self.altitude = 0.0
         self.geoid_height = 0.0
@@ -115,11 +115,11 @@ class MicropyGPS(object):
         """Format Latitude Data Correctly"""
         if self.coord_format == 'dd':
             decimal_degrees = self._latitude[0] + (self._latitude[1] / 60)
-            return [decimal_degrees, self._latitude[2]]
+            return (decimal_degrees, self._latitude[2])
         elif self.coord_format == 'dms':
             minute_parts = modf(self._latitude[1])
             seconds = round(minute_parts[0] * 60)
-            return [self._latitude[0], int(minute_parts[1]), seconds, self._latitude[2]]
+            return (self._latitude[0], int(minute_parts[1]), seconds, self._latitude[2])
         else:
             return self._latitude
 
@@ -128,11 +128,11 @@ class MicropyGPS(object):
         """Format Longitude Data Correctly"""
         if self.coord_format == 'dd':
             decimal_degrees = self._longitude[0] + (self._longitude[1] / 60)
-            return [decimal_degrees, self._longitude[2]]
+            return (decimal_degrees, self._longitude[2])
         elif self.coord_format == 'dms':
             minute_parts = modf(self._longitude[1])
             seconds = round(minute_parts[0] * 60)
-            return [self._longitude[0], int(minute_parts[1]), seconds, self._longitude[2]]
+            return (self._longitude[0], int(minute_parts[1]), seconds, self._longitude[2])
         else:
             return self._longitude
 
@@ -270,10 +270,10 @@ class MicropyGPS(object):
             # TODO - Add Magnetic Variation
 
             # Update Object Data
-            self._latitude = [lat_degs, lat_mins, lat_hemi]
-            self._longitude = [lon_degs, lon_mins, lon_hemi]
+            self._latitude = (lat_degs, lat_mins, lat_hemi)
+            self._longitude = (lon_degs, lon_mins, lon_hemi)
             # Include mph and hm/h
-            self.speed = [spd_knt, spd_knt * 1.151, spd_knt * 1.852]
+            self.speed = (spd_knt, spd_knt * 1.151, spd_knt * 1.852)
             self.course = course
             self.valid = True
 
@@ -281,9 +281,9 @@ class MicropyGPS(object):
             self.new_fix_time()
 
         else:  # Clear Position Data if Sentence is 'Invalid'
-            self._latitude = [0, 0.0, 'N']
-            self._longitude = [0, 0.0, 'W']
-            self.speed = [0.0, 0.0, 0.0]
+            self._latitude = (0, 0.0, 'N')
+            self._longitude = (0, 0.0, 'W')
+            self.speed = (0.0, 0.0, 0.0)
             self.course = 0.0
             self.valid = False
 
@@ -323,16 +323,16 @@ class MicropyGPS(object):
                 return False
 
             # Update Object Data
-            self._latitude = [lat_degs, lat_mins, lat_hemi]
-            self._longitude = [lon_degs, lon_mins, lon_hemi]
+            self._latitude = (lat_degs, lat_mins, lat_hemi)
+            self._longitude = (lon_degs, lon_mins, lon_hemi)
             self.valid = True
 
             # Update Last Fix Time
             self.new_fix_time()
 
         else:  # Clear Position Data if Sentence is 'Invalid'
-            self._latitude = [0, 0.0, 'N']
-            self._longitude = [0, 0.0, 'W']
+            self._latitude = (0, 0.0, 'N')
+            self._longitude = (0, 0.0, 'W')
             self.valid = False
 
         return True
@@ -408,8 +408,8 @@ class MicropyGPS(object):
                 geoid_height = 0
 
             # Update Object Data
-            self._latitude = [lat_degs, lat_mins, lat_hemi]
-            self._longitude = [lon_degs, lon_mins, lon_hemi]
+            self._latitude = (lat_degs, lat_mins, lat_hemi)
+            self._longitude = (lon_degs, lon_mins, lon_hemi)
             self.altitude = altitude
             self.geoid_height = geoid_height
 
@@ -626,8 +626,8 @@ class MicropyGPS(object):
                 geoid_height = 0
 
             # Update Object Data
-            self._latitude = [lat_degs, lat_mins, lat_hemi]
-            self._longitude = [lon_degs, lon_mins, lon_hemi]
+            self._latitude = (lat_degs, lat_mins, lat_hemi)
+            self._longitude = (lon_degs, lon_mins, lon_hemi)
             self.altitude = altitude
             self.geoid_height = geoid_height
 
