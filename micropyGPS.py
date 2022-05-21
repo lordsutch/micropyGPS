@@ -11,6 +11,10 @@
 # Dynamically limit sentences types to parse
 
 from math import floor, modf
+try:
+    from math import inf
+except ImportError:
+    inf = float('Inf')
 
 # Import utime or time for fix time handling
 try:
@@ -94,9 +98,9 @@ class MicropyGPS(object):
         self.last_sv_sentence = 0
         self.total_sv_sentences = 0
         self.satellite_data = dict()
-        self.hdop = 0.0
-        self.pdop = 0.0
-        self.vdop = 0.0
+        self.hdop = inf
+        self.pdop = inf
+        self.vdop = inf
         self.valid = False
         self.fix_stat = 0
         self.fix_type = 1
@@ -368,7 +372,7 @@ class MicropyGPS(object):
             # Horizontal Dilution of Precision
             hdop = float(self.gps_segments[8])
         except (ValueError, IndexError):
-            hdop = 0.0
+            hdop = inf
 
         # Process Location and Speed Data if Fix is GOOD
         if fix_stat:
